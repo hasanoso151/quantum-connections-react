@@ -4,7 +4,7 @@ An immersive cosmic relationship simulator that visualizes the bond between two 
 
 ## 🌟 Features
 
-- **Cosmic Analysis:** Uses Google Gemini (Flash 2.5) to analyze relationship dynamics based on metaphorical user inputs.
+- **Cosmic Analysis:** Uses Google Gemma 3 (12b-it) to analyze relationship dynamics based on metaphorical user inputs.
 - **3D Particle Engine:** Renders unique 3D shapes (Heart, Galaxy, Infinity Loop, Chaos Sphere) using Three.js.
 - **Dynamic Archetypes:** Supports 4 relationship types:
   - ❤️ Love (Heart Nebula)

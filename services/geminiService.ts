@@ -2,59 +2,53 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { UserInput } from "../types";
 import { toast } from "sonner";
 
-const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
+const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY || process.env.GEMMA_API_KEY;
 console.log("Gemini API Key defined:", !!apiKey, "Length:", apiKey ? apiKey.length : 0);
 const ai = new GoogleGenAI({ apiKey: apiKey });
 
 export const generateCosmicResonance = async (input: UserInput): Promise<{ quote: string; score: number; archetypeTitle: string; insight: string }> => {
-  const model = "gemini-2.5-flash";
+  const model = "gemma-3-12b-it";
 
   const prompt = `
-    Role: You are the poetic voice of a soul connection.
-    Task: Take the provided "Cosmic Metaphors" and transmute them into **Raw Human Emotion**.
-    
+    Role: You are the inner voice of a single soul shared by two bodies.
+    Task: Distill the "Cosmic Metaphors" into a single, explosive realization of emotional truth.
+
+    **CRITICAL RULES:**
+    1. **Language:** STRICTLY Classical Arabic (الفصحى).
+    2. **Length:**  VERY SHORT. Max 20 words. One powerful, dense sentence.
+    3. **Perspective:** Use "We" (نحن). You are speaking TO YOURSELVES, not to an audience.
+       - NEVER use: "يا أحبائي" (Oh loved ones), "أيها..." (Oh...), or address anyone.
+    4. **Tone:** Intense, Sufi, metaphysical. Not flowery, but piercing.
+
     Input Data:
     - Names: ${input.name1} & ${input.name2}
     - Relationship: ${input.relationship}
-    - Dynamic Context:
-      * Q1: "${input.q1Question}" -> User Chose: "${input.q1Text}"
-      * Q2: "${input.q2Question}" -> User Chose: "${input.q2Text}"
-      * Q3: "${input.q3Question}" -> User Chose: "${input.q3Text}"
+    - Metaphors: 
+      * "${input.q1Question}" -> "${input.q1Text}"
+      * "${input.q2Question}" -> "${input.q2Text}"
+      * "${input.q3Question}" -> "${input.q3Text}"
 
-    **Strict Rules for "The Voice":**
-    1. **Perspective:** ALWAYS use "We/Us" (نحن). The tone is intimate and confessional.
-    2. **The Golden Rule:** Do NOT strictly translate the metaphors. **Interpret the FEELING behind them.**
-       - *Bad:* "We are stars and we have explosions." (Robotic).
-       - *Good:* "We found peace in our own beautiful chaos." (Human).
-    3. **Flow:** The result must be **one cohesive, deep sentence**. No choppy phrases.
-    4. **Vocabulary:** Use words like: (Mullaadh/ملاذ, Ruh/روح, Abadiya/أبدية, Tihna/تهنا, Wajadna/وجدنـا).
-
-    **Refined Few-Shot Examples (Focus on Human Depth):**
-
-    *Example 1 (Passionate Love):*
-    Input: Metaphors (Fusion, Fire, Heat).
-    Output Insight: "لم يعد أحدنا يعرف أين ينتهي هو وأين يبدأ الآخر؛ نحن روح واحدة تحترق شغفاً لتضيء عتمة هذا العالم."
-    *(Note: Interpreted "Fusion" as "Don't know where one ends...", and "Fire" as "Burning passion".)*
-
-    *Example 2 (Safe Friendship):*
-    Input: Metaphors (Shield, Stability, Roots).
-    Output Insight: "نحن الملاذ الآمن لبعضنا في هذا العالم الموحش؛ كتفانا يسندان السماء حتى لا تسقط علينا."
-    *(Note: Interpreted "Shield" as "Holding up the sky".)*
-
-    *Example 3 (Chaotic/Fun Connection):*
-    Input: Metaphors (Space Pirates, Chaos, Energy).
-    Output Insight: "نحن فوضى جميلة ترفض الانصياع للمنطق؛ ضحكاتنا وحدها قادرة على إعادة ترتيب الكون."
-    *(Note: Interpreted "Pirates/Chaos" as "Refusing logic".)*
-
-    **Goal:** Write a text that the user would be proud to tattoo on their arm. Deep, timeless, and strictly in Arabic.
-
-    **JSON Output Requirements:**
-    - "archetypeTitle": A 2-3 word Arabic title (e.g., "الاحتراق المقدس").
-    - "quote": A philosophical line (Rumi style).
-    - "score": 75-99.
-    - "insight": The poetic declaration (max 25 words) in Arabic using "We" perspective.
+    **Examples of Desired Output (JSON):**
     
-    Return JSON.
+    Example 1:
+    {
+      "archetypeTitle": "الاحتراق المقدس",
+      "quote": "نحن نار تلتهم المسافات.",
+      "score": 98,
+      "insight": "تلاشت حدودنا في لحظة صدق، فصرنا لهيباً واحداً يحرق كل ما يفرقنا."
+    }
+
+    Example 2:
+    {
+       "archetypeTitle": "الملاذ الأبدي",
+       "quote": "أنت استقراري في مهب الريح.",
+       "score": 92,
+       "insight": "في فوضى الكون، وجدنا في بعضنا وطناً لا يغادره السكينة، وجذوراً تأبى الاقتلاع."
+    }
+
+    **Your Turn:**
+    Based on the input, generate the JSON.
+    valid JSON only.
   `;
 
   try {
@@ -65,24 +59,14 @@ export const generateCosmicResonance = async (input: UserInput): Promise<{ quote
     const response = await ai.models.generateContent({
       model,
       contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            archetypeTitle: { type: Type.STRING, description: "Mystic title in Arabic" },
-            quote: { type: Type.STRING, description: "The poetic quote in Arabic" },
-            score: { type: Type.INTEGER, description: "Resonance score 0-100" },
-            insight: { type: Type.STRING, description: "The poetic declaration in Arabic (max 25 words)" }
-          },
-          required: ["archetypeTitle", "quote", "score", "insight"]
-        }
-      }
     });
 
     // Fix: Access .text property directly instead of calling it as a function
-    const text = response.text;
+    let text = response.text;
     if (!text) throw new Error("No response from AI");
+
+    // Clean markdown if present
+    text = text.replace(/```json\n?|\n?```/g, "").trim();
 
     return JSON.parse(text);
   } catch (error) {
